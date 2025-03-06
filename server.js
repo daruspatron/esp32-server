@@ -4,10 +4,20 @@ const cors = require("cors");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());  // 🔹 Permite procesarea datelor JSON
+app.use(cors()); 
+app.use(express.json());  // ✅ Asigură că Express procesează JSON-ul
 
-let mode = "led";  // Mod implicit: control LED
+// 🔹 Debugging: Afișează fiecare cerere primită
+app.use((req, res, next) => {
+    console.log(`🟢 [${req.method}] ${req.url}`);
+    console.log("📥 Body primit:", req.body);
+    console.log("🔍 Headers:", req.headers);
+    next();
+});
+
+let mode = "led";  // Mod implicit
+let ledState = "off";
+let sensorData = { temperature: null, humidity: null };
 
 // 🔹 Endpoint pentru obținerea modului curent
 app.get("/mode", (req, res) => {
@@ -16,31 +26,35 @@ app.get("/mode", (req, res) => {
 
 // 🔹 Endpoint pentru schimbarea modului
 app.post("/mode", (req, res) => {
-    console.log("🔹 Cerere primită la /mode:", req.body); // Debugging
-
     const { mode: newMode } = req.body;
+
+    if (!newMode) {
+        console.log("❌ Eroare: JSON-ul primit NU conține 'mode'.");
+        return res.status(400).json({ error: "Invalid mode, missing 'mode' key." });
+    }
+
     if (newMode === "led" || newMode === "sensor") {
         mode = newMode;
         console.log(`✅ Mod schimbat la: ${mode}`);
         res.json({ message: `Mode set to ${mode}` });
     } else {
-        console.log("❌ Eroare: Invalid mode");
+        console.log("❌ Eroare: Invalid mode primit:", newMode);
         res.status(400).json({ error: "Invalid mode" });
     }
 });
 
-
-// 🔹 Endpoint pentru control LED (exemplu)
-let ledState = "off";
+// 🔹 Endpoint pentru control LED
 app.post("/led", (req, res) => {
     const { state } = req.body;
-    if (state === "on" || state === "off") {
-        ledState = state;
-        console.log(`💡 LED set to: ${ledState}`);
-        res.json({ message: `LED turned ${ledState}` });
-    } else {
-        res.status(400).json({ error: "Invalid LED state" });
+
+    if (!state || (state !== "on" && state !== "off")) {
+        console.log("❌ Eroare: Invalid LED state primit:", state);
+        return res.status(400).json({ error: "Invalid LED state" });
     }
+
+    ledState = state;
+    console.log(`💡 LED set to: ${ledState}`);
+    res.json({ message: `LED turned ${ledState}` });
 });
 
 // 🔹 Endpoint pentru verificarea statusului LED-ului
@@ -49,16 +63,17 @@ app.get("/led/status", (req, res) => {
 });
 
 // 🔹 Endpoint pentru trimiterea datelor senzorului
-let sensorData = { temperature: null, humidity: null };
 app.post("/esp32/data", (req, res) => {
     const { temperature, humidity } = req.body;
-    if (temperature !== undefined && humidity !== undefined) {
-        sensorData = { temperature, humidity };
-        console.log(`🌡️ Temp: ${temperature}°C, 💧 Humidity: ${humidity}%`);
-        res.json({ message: "Data received", temperature, humidity });
-    } else {
-        res.status(400).json({ error: "Invalid sensor data" });
+
+    if (temperature === undefined || humidity === undefined) {
+        console.log("❌ Eroare: Invalid sensor data primit:", req.body);
+        return res.status(400).json({ error: "Invalid sensor data, missing temperature or humidity" });
     }
+
+    sensorData = { temperature, humidity };
+    console.log(`🌡️ Temp: ${temperature}°C, 💧 Humidity: ${humidity}%`);
+    res.json({ message: "Data received", temperature, humidity });
 });
 
 // 🔹 Endpoint pentru obținerea ultimelor date ale senzorului
