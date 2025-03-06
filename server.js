@@ -16,15 +16,19 @@ app.get("/mode", (req, res) => {
 
 // 🔹 Endpoint pentru schimbarea modului
 app.post("/mode", (req, res) => {
+    console.log("🔹 Cerere primită la /mode:", req.body); // Debugging
+
     const { mode: newMode } = req.body;
     if (newMode === "led" || newMode === "sensor") {
         mode = newMode;
-        console.log(`🔄 Mod schimbat: ${mode}`);
+        console.log(`✅ Mod schimbat la: ${mode}`);
         res.json({ message: `Mode set to ${mode}` });
     } else {
+        console.log("❌ Eroare: Invalid mode");
         res.status(400).json({ error: "Invalid mode" });
     }
 });
+
 
 // 🔹 Endpoint pentru control LED (exemplu)
 let ledState = "off";
