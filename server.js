@@ -16,7 +16,7 @@ app.get("/mode", (req, res) => {
 
 // 🔹 Endpoint pentru schimbarea modului
 app.post("/mode", (req, res) => {
-    const { newMode } = req.body;
+    const { mode: newMode } = req.body;
     if (newMode === "led" || newMode === "sensor") {
         mode = newMode;
         console.log(`🔄 Mod schimbat: ${mode}`);
