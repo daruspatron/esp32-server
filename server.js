@@ -26,13 +26,15 @@ app.get("/mode", (req, res) => {
 
 // 🔹 Endpoint pentru schimbarea modului
 app.post("/mode", (req, res) => {
-    const { mode: newMode } = req.body;
+    console.log("🔹 Cerere primită la /mode:", req.body);
+    console.log("🔍 Headers:", req.headers);
 
-    if (!newMode) {
-        console.log("❌ Eroare: JSON-ul primit NU conține 'mode'.");
+    if (!req.body || !req.body.mode) {
+        console.log("❌ JSON invalid primit!");
         return res.status(400).json({ error: "Invalid mode, missing 'mode' key." });
     }
 
+    const { mode: newMode } = req.body;
     if (newMode === "led" || newMode === "sensor") {
         mode = newMode;
         console.log(`✅ Mod schimbat la: ${mode}`);
@@ -42,6 +44,7 @@ app.post("/mode", (req, res) => {
         res.status(400).json({ error: "Invalid mode" });
     }
 });
+
 
 // 🔹 Endpoint pentru control LED
 app.post("/led", (req, res) => {
